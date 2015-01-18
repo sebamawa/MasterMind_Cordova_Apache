@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>AMasterMind</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <!-- Cordova framework -->
+        <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+        <!-- JQuery y JQuery Mobile CDN -->
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.4/jquery.mobile-1.4.4.min.css"/> 
+        <!-- JQuery Mobile CSS local -->
+        <!-- <link rel="stylesheet" href="js/libs/jquery/jquery.mobile-1.4.4.min.css"/> -->
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script src="https://code.jquery.com/mobile/1.4.4/jquery.mobile-1.4.4.min.js"></script> 
+        
+        <!-- Extension JQuery para rotar imagenes (https://code.google.com/p/jqueryrotate/) -->
+        <!-- <script src="js/JQueryRotate.js"></script> --> <!-- Local -->
+        <!--
+        <script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script> //CDN
+        -->
+        
+        <!-- Imagen de fondo. Clase html agregada a data-role='page' -->
+        <style>
+            .backgroundImage{background-image: url('img/mente-background.jpg')}
+        </style>
+        
+        <!-- **************************************************************************** -->
+        
+        <script>
+
+        </script>    
+        
+        <script type="text/javascript" charset="utf-8">
+            // Carga de Cordova: Wait for device API libraries to load
+            //
+            function onLoad() {
+                document.addEventListener("deviceready", onDeviceReady, false);
+            }
+
+            // device APIs are available
+            //
+            function onDeviceReady() {
+                // Register the event listener
+                document.addEventListener("backbutton", onBackKeyDown, false);
+            }
+
+            // Handle the back button
+            //
+//            function onConfirm(buttonIndex){
+//                if (buttonIndex === 2)  //BtnAceptar = 1; BtnContinuar = 2
+//                    navigator.app.backHistory();
+//                else //pantalla inicial
+//                    location.href = "index.html";
+//            }
+            function onBackKeyDown() {
+                //alert("Boton atras presionado!");
+//                navigator.notification.confirm("Si presiona Continuar saldrá de la partida. Presione Aceptar para seguir en la partida actual.",
+//                                                onConfirm, "Volver atrás", "Aceptar", "Continuar");
+                //Uso de confirm de JS en lugar de navigator.notification.confirm de Cordova
+                if (confirm("Esta seguro que desea salir de la aplicación...?"))
+                    navigator.app.exitApp();
+            }
+        </script>
+        
+        <script>     
+            var interval;
+            var i;
+            
+            $(document).ready(function(){  
+                i = $("#img_cerebro");
+                
+                //ajustaAlto();
+                //desvaneceImagen();
+            });
+            
+//            function ajustaAlto(){
+//                /* Ajusta el alto de la imagen de la pantalla principal para que todos los elementos quepan en pantalla
+//                * alturaImagen = altura de la pagina - (alturaTitulo + alturaBotones) */
+//               //SOLO SE DISPARA AL INICIAR LA APLICAION (POR ESTAR EN EL HEAD). SE DEBE CORREGIR CUANDO SE CAMBIA LA ORIENTACION
+//                var heightDevice = $(window).height();
+//                //alert(heightDevice);
+//                $("#img_cerebro").css("height", heightDevice-170);
+//            }
+                
+        /*
+            function desvaneceImagen(){
+                //desvanece la imagen de la pantalla de inicio ciclicamente (solo en la pantalla de inicio la primera vez)
+                interval = setInterval(function(){
+                    i.fadeToggle(4000);
+                }, 4000);
+            }
+        */    
+         
+            
+            /* Gira la imagen de la pantalla principal, espera 1 segundo, y segun el 
+             * parametro 'giro' lanza la pantalla de Iniciar  o de Ayuda.
+             * Anulado por complejizar algo las transiciones entre pantallas con botones.
+             * Se usa en su lugar <a> y efectos de transicion entre pantallas con data-transition="efecto" */
+        /*
+            function btnAyuda(giro){
+                clearInterval(interval);  //detenemos la funcion setInteval()
+                i.fadeIn(); //mostramos la imagen si esta oculta (observar que si se presiona el
+                        //boton cuando se esta desvaneciendo la imagen sin esta sentencia, al volver a la pantalla
+                        //ya no aparece la imagen pues termina el proceso fadeOut)
+                
+                var rotation = function (){   
+                    i.rotate({
+                       angle:0, 
+                       animateTo:giro, 
+                       callback: null//rotation
+                    });
+                 };
+             rotation();
+             setTimeout(function(){
+                 if (giro === 360){ 
+                    //location.href = "#paginaOpciones"; //No funciona en dispositivo
+                    //$.mobile.changePage("#paginaOpciones");
+                    $.mobile.changePage( "#paginaOpciones", { transition: "slide", changeHash: false });
+                 }else
+                    //location.href = "#paginaAyuda";
+                    $.mobile.changePage("#paginaAyuda");    
+             } ,1000);
+            }
+        */
+            
+            //funcion para jugar una vez elegidas las opciones de juego (se usa archivo logica.js)
+            function iniciaJuego(){
+                var modoJuego;
+                var tipoCodigo;
+                var dificultad;
+                //ubicamos las opciones elegidas de ModoJuego, TipoCodigo y dificultad de los radio buttons
+                //radio button de modo juego
+                var mJuego = $("#radio-modo-1");
+                if (mJuego.prop("checked"))
+                    modoJuego = "adivinador";
+                else
+                    modoJuego = "pensador";
+                
+                //radio button de tipo de codigo
+                var tCodigo = $("#radio-tipo-1");
+                if (tCodigo.prop("checked"))
+                    tipoCodigo = "numerico";
+                else{
+                    tCodigo = $("#radio-tipo-2");
+                    if (tCodigo.prop("checked"))
+                        tipoCodigo = "letras";
+                    else
+                        tipoCodigo = "combinado";
+                }
+                
+                //radio button de dificultad
+                var dif = $("#radio-dificultad-1");
+                if (dif.prop("checked"))
+                    dificultad = "principiante";
+                else{
+                    dif = $("#radio-dificultad-2");
+                    if (dif.prop("checked"))
+                        dificultad = "moderado";
+                    else
+                        dificultad = "experto";
+                }
+                
+                //alert("ModoJuego: " + modoJuego + " , TipoCodigo: " + tipoCodigo + " , Dificultad: " + dificultad);
+                //Pasamos los parametros de juego en la url juego.html
+                location.href = "juego.html?modoJuego="+modoJuego+"&tipoCodigo="+tipoCodigo+"&dificultad="+dificultad;
+            }
+
+        </script>
+    </head>
+    
+    
+    <body onload="onLoad()">
+        <!-- Pagina de inicio (Pagina 1) -->
+        <div id="paginaInicio" data-role="page" data-theme="a" style="padding:5px; text-align:center;">
+            <div data-role="header">
+                MasterMind - Principal
+            </div>
+<!--            <div id="header">
+                <h1 style="border:3px solid blue">MasterMind</h1>
+            </div>-->
+            <div data-role="main" class="ui-content" style="background-color:#cceeee">
+                
+                <div id="header">
+                    <h1 style="border:3px solid blue">MasterMind</h1>
+                </div>
+                
+                <div>
+                    <img id="img_cerebro" src="img/cerebro.png" alt="imagen" style="width:100%">
+                </div>
+                <div id="buttons">
+                    <!-- <button onclick="btnAyuda(360)" class="ui-btn ui-btn-inline" style="width:45%">Iniciar</button> -->
+                    <a href="#paginaOpciones" data-transition="flip" class="ui-btn ui-btn-inline" style="width:30%">Iniciar</a> 
+                    <!-- <button onclick="btnAyuda(-360)" class="ui-btn ui-btn-inline" style="width:45%">Ayuda</button> -->
+                    <a href="#paginaAyuda" data-transition="slide" class="ui-btn ui-btn-inline" style="width:30%">Ayuda</a>
+                </div>    
+            </div>
+        </div>
+        
+        <!-- Pagina de opciones (Pagina2) -->
+        <div data-role="page" data-theme="a" id="paginaOpciones" style="text-align:center" class="backgroundImage">
+            <div data-role="header">
+                MasterMind - Opciones
+            </div>
+            <div data-role="main" class="ui-content" id="backgroundImage">
+                <!-- Radio buttons para el modo de juego (adivinador opensador) -->
+                <fieldset id="modo" data-role="controlgroup" data-type="horizontal">
+                   <legend>Modo de juego</legend>
+                   <input type="radio" name="radio-modo" id="radio-modo-1" value="on" checked="checked">
+                   <label for="radio-modo-1">Adivinador</label>
+                   <input type="radio" name="radio-modo" id="radio-modo-2" value="off">
+                   <label for="radio-modo-2">Pensador</label>
+               </fieldset>
+                
+               <fieldset id="tipo" data-role="controlgroup" data-type="horizontal">
+                    <legend>Tipo de código</legend>
+                    <input type="radio" name="radio-tipo" id="radio-tipo-1" value="on" checked="checked">
+                    <label for="radio-tipo-1">Numérico</label>
+                    <input type="radio" name="radio-tipo" id="radio-tipo-2" value="off">
+                    <label for="radio-tipo-2">Letras</label>
+                    <input type="radio" name="radio-tipo" id="radio-tipo-3" value="other">
+                    <label for="radio-tipo-3">Combinado</label>
+                </fieldset>
+                
+                <!-- Radio buttons para la dificultad (Principiante, Moderado, Experto) -->
+                <fieldset id="dificultad" data-role="controlgroup" data-type="horizontal">
+                    <legend>Dificultad</legend>
+                    <input type="radio" name="radio-dificultad" id="radio-dificultad-1" value="on" checked="checked">
+                    <label for="radio-dificultad-1">Principiante</label>
+                    <input type="radio" name="radio-dificultad" id="radio-dificultad-2" value="off">
+                    <label for="radio-dificultad-2">Moderado</label>
+                    <input type="radio" name="radio-dificultad" id="radio-dificultad-3" value="other">
+                    <label for="radio-dificultad-3">Experto</label>
+                </fieldset>
+                <br>
+                <div>
+                    <button class="ui-btn" onclick="iniciaJuego()">Jugar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pagina de Ayuda (Pagina 3) -->
+        <div data-role="page" id="paginaAyuda">
+            <div data-role="header">
+                MasterMind - Ayuda
+            </div>
+            <div role="main" class="ui-content">
+                
+            </div>
+        </div>
+        
+        <!-- Pagina de juego (Pagina 4) -->
+        <div data-role="page" id="paginaJuego">
+            <div data-role="header">
+                MasterMind - Juego
+            </div>
+        </div>
+        
+        <!--******************** Scripts *************************-->
+        <script>
+            /* Ajusta el alto de la imagen de la pantalla principal para que todos los elementos quepan en pantalla
+             * alturaImagen = altura de la pagina - (alturaTitulo + alturaBotones) */
+//            var heightDevice = $(window).height();
+//            //alert(heightDevice);
+//            $("#img_cerebro").css("height", heightDevice-170);
+
+        </script>
+
+    </body>
+</html>
+

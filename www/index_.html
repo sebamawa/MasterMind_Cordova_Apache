@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>AMasterMind</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <!-- Cordova framework -->
+        <script type="text/javascript" src="cordova.js"></script> 
+        <!-- JQuery y JQuery Mobile CDN -->
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.4/jquery.mobile-1.4.4.min.css"/> 
+        <!-- JQuery Mobile CSS local -->
+        <!-- <link rel="stylesheet" href="js/libs/jquery/jquery.mobile-1.4.4.min.css"/> -->
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script src="https://code.jquery.com/mobile/1.4.4/jquery.mobile-1.4.4.min.js"></script> 
+        
+        <!-- Extension JQuery para rotar imagenes (https://code.google.com/p/jqueryrotate/) -->
+        <!-- <script src="js/JQueryRotate.js"></script> --> <!-- Local -->
+        <script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script> <!-- CDN -->
+        
+        <script>
+//            function rotarImagen(){
+//                var angle = 0;
+//                setInterval(function(){
+//                    angle+=3;
+//                   $(".img_cerebro").rotate(angle);
+//              },1000);
+//            }
+        </script>
+    </head>
+    <body>
+        <div data-role="page" id="foo" style="background-color:black">
+             <h1>AMasterMind</h1>
+             <div class="img_cerebro" style="text-align:center">
+                <img src="img/cerebro_elipse.png" alt="img">
+             </div>
+             
+             <div id="botones">
+                 <button onclick="rotarImagen()" class="ui-btn ui-btn-inline" style="width:80px">Rotar</button>
+                 <button class="ui-btn ui-btn-inline">Ayuda</button>
+             </div>
+        </div>
+        
+        <!-- *************************** Scripts *************************** -->
+        <!-- Script para rotar imagen (se usa CDN de JQueryRotate.js) -->
+        <script>
+                var angle = 0;
+                var horario = true;
+                setInterval(function(){
+                    if (horario){
+                        if (angle < 30)
+                            angle += 2;
+                        else
+                            horario = false;
+                    }else{
+                        if (angle > -30)
+                            angle -=2;
+                        else
+                            horario = true;
+                    }
+                  
+                   $(".img_cerebro").rotate(angle);       
+              },200);
+        </script>
+    </body>
+</html>

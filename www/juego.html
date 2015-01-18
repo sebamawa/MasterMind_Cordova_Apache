@@ -1,0 +1,406 @@
+<html>
+    <head>
+       <title>AMasterMind-Juego</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <!-- Cordova framework -->
+        <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+        <!-- JQuery y JQuery Mobile CDN -->
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.4/jquery.mobile-1.4.4.min.css"/> 
+        <!-- JQuery Mobile CSS local -->
+        <!-- <link rel="stylesheet" href="js/libs/jquery/jquery.mobile-1.4.4.min.css"/> -->
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script src="https://code.jquery.com/mobile/1.4.4/jquery.mobile-1.4.4.min.js"></script> 
+        
+        <!-- Extension JQuery para rotar imagenes (https://code.google.com/p/jqueryrotate/) -->
+        <!-- <script src="js/JQueryRotate.js"></script> --> <!-- Local -->
+        <!--
+        <script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script> //CDN
+        -->
+        
+        <!-- Fuente de Google Fonts. Nota: no es muy eficiente por la carga y lo poco que se usa esta fuente (solo en 2 parrafos) -->
+        <link href='http://fonts.googleapis.com/css?family=Changa+One' rel='stylesheet' type='text/css'>
+        <style>
+            .estilo{ font-family: 'Changa One', cursive;
+                     font-size: 1.3em
+                    }
+        </style>
+        
+        <!-- Imagen de fondo. Clase html agregada a data-role='page' -->
+        <style>
+            .backgroundImage{background-image: url('img/mente-background.jpg')}
+        </style>
+        
+        <!-- **************************************************************************** -->
+        
+        <script type="text/javascript" charset="utf-8">
+            // Carga de Cordova: Wait for device API libraries to load
+            //
+            function onLoad() {
+                document.addEventListener("deviceready", onDeviceReady, false);
+            }
+
+            // device APIs are available
+            //
+            function onDeviceReady() {
+                // Register the event listener
+                document.addEventListener("backbutton", onBackKeyDown, false);
+                //var my_media = new Media("http://audio.ibeat.org/content/p1rj1s/p1rj1s_-_rockGuitar.mp3");
+                //my_media.play();
+            }
+
+            // Handle the back button
+            //
+//            function onConfirm(buttonIndex){
+//                if (buttonIndex === 2)  //BtnAceptar = 1; BtnContinuar = 2
+//                    navigator.app.backHistory();
+//                else //pantalla inicial
+//                    location.href = "index.html";
+//            }
+            function onBackKeyDown() {
+                //alert("Boton atras presionado!");
+//                navigator.notification.confirm("Si presiona Continuar saldrá de la partida. Presione Aceptar para seguir en la partida actual.",
+//                                                onConfirm, "Volver atrás", "Aceptar", "Continuar");
+                //Uso de confirm de JS en lugar de navigator.notification.confirm de Cordova
+                if (confirm("Si presiona Aceptar saldrá de la partida. Si presiona Cancelar permanecerá en la misma."))
+                    location.href = "index.html";
+            }
+        </script>
+        
+        <script>
+            /* DESTACADO: Funcion que retorna un parametro (buscado por su nombre)
+             * desde la URL de la pagina (http://stackoverflow.com/questions/11582512/how-to-get-url-parameters-with-javascript) */
+            function getURLParameter(name) {
+                 return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null
+            }
+            
+            /* DESTACADO: Funcion que sustituye en un string un caracter dado por su indice.
+             * Se extiende la clase String de JS
+             * (http://stackoverflow.com/questions/1431094/how-do-i-replace-a-character-at-a-particular-index-in-javascript)*/
+            String.prototype.replaceAt=function(index, character) {
+                return this.substr(0, index) + character + this.substr(index+character.length);
+            }
+            
+            /*Funcion que genera un codigo aleatorio de largo dado a partir de los caracteres de un string que se pasa como argumento*/
+            function randCode(s, length){
+                code="";
+                for (i=0; i<=length-1; i++){
+                    rand = Math.floor(Math.random()*s.length);
+                    code += s.substr(rand, 1);
+                }
+                return code;
+            }
+            
+            //Variables globales
+            //Parametros a recuperar
+            var modoJuego; 
+            var tipocodigo;
+            var dificultad;
+            var largoCodigo;
+            var regExpAdivinador; //expresion regular para controlar los codigos del adivinador (caracteres dentro de rango)
+            
+            var codigoPensador = "";  //string que almacena el codigo generado aleatoriamente
+            var codigosArriesgados; //string asociado a parrafo (id="codigosArriesgados") para ir mostrando 
+                                    //los codigos arriesgados por el adivinador
+            var cantIntentos;
+            
+            //Recupera los parametros
+            function retrieveParameters(){
+                modoJuego = getURLParameter("modoJuego");
+                tipoCodigo = getURLParameter("tipoCodigo");
+                dificultad = getURLParameter("dificultad");
+                //alert("ModoJuego: " + modoJuego + " , TipoCodigo: " + tipoCodigo + " , Dificultad: " + dificultad);                           dificultad === "moderado" ? 15 : 20;
+            }
+            
+            function generateCode(){
+                code="";
+                pattern = ""; //patrón de expresion regular para verificar codigos introducidos por el adivinador
+                if (modoJuego === "adivinador"){
+                //if (modoJuego.localeCompare("adivinador") == 0){
+                    if (tipoCodigo.localeCompare("numerico") == 0){
+                        //if (dificultad.localeCompare("principiante") == 0){
+//                            for (i=1; i<=largoCodigo; i++){  //codigo numerico de largo 'largoCodigo' (comos string)
+//                                codigoPensador += Math.floor(Math.random() * largoCodigo) + 1;
+//                            }
+//                            code = largoCodigo === 4 ? "1234" :
+//                                    largoCodigo === 6 ? "123456" : "12345678";
+//                            codigoPensador = randCode(code, largoCodigo); //randCode() genera un codigo aleatorio
+//                                        //con los caracteres de 'code' de largo 'largoCodigo' 
+                            
+                            switch (largoCodigo){
+                                case 4:
+                                    code = "1234";
+                                    pattern = /[^1234]+/;
+                                    break;
+                                case 6:
+                                    code = "123456";
+                                    pattern = /[^123456]+/;
+                                    break;
+                                case 8:
+                                    code = "12345678";
+                                    pattern = /[^12345678]+/;
+                                    break;
+                            }
+//                            regExpAdivinador = new RegExp(pattern);
+//                            codigoPensador = randCode(code, largoCodigo);
+                        //} 
+                    }else
+                        if (tipoCodigo === "letras"){
+//                            code = largoCodigo === 4 ? "ABCD":
+//                                    largoCodigo === 6 ? "ABCDEF" : "ABCDEFGH";
+                            //codigoPensador = randCode(code, largoCodigo);
+                            switch (largoCodigo){
+                                case 4:
+                                    code = "ABCD";
+                                    pattern = /[^ABCD]+/;
+                                    break;
+                                case 6:
+                                    code = "ABCDEF";
+                                    pattern = /[^ABCDEF]+/;
+                                    break;
+                                case 8:
+                                    code = "ABCDEFGH";
+                                    pattern = /[^ABCDEFGH]+/;
+                                    break;
+                            }
+                        }else
+                            if (tipoCodigo === "combinado"){ 
+//                                code = largoCodigo === 4 ? "12AB":
+//                                        largoCodigo === 6 ? "123ABC": "1234ABCD";
+//                                codigoPensador = randCode(code, largoCodigo);
+                                  switch (largoCodigo){
+                                      case 4:
+                                          code = "12AB";
+                                          pattern = /[^12AB]+/;
+                                          break;
+                                      case 6:
+                                          code = "123ABC";
+                                          pattern = /[^123ABC]+/;
+                                          break;
+                                      case 8:
+                                          code = "1234ABCD";
+                                          pattern = /[^1234ABCD]/;
+                                          break;
+                                  }  
+                            }
+                        
+                            regExpAdivinador = new RegExp(pattern);
+                            codigoPensador = randCode(code, largoCodigo);
+                }else{  //modo juego = Pensador
+                    alert("Modo juego: Pensador (no implementado)");
+                    location.href = "index.html";
+                }
+                
+                alert(codigoPensador);  //Prueba: muestra el codigo generado
+                return codigoPensador;
+        }
+        
+          /* Funciones para el calculo de buenos y regulares. Se sustituyen por la funcion
+           * calculoBuenosRegulares() que devuelve un arreglo de dos enteros donde el primero
+           * es el numero de buenos y el segundo el de regulares */  
+//        function calculaBuenos(codigoAdivinador, codigoPensador){
+//            var buenos = 0 ;
+//            for (i=0; i<=largoCodigo-1; i++){  //charAt(0)
+//                if (codigoAdivinador.charAt(i) == codigoPensador.charAt(i))
+//                    buenos++;
+//            }
+//            return buenos;
+//        }
+//        
+//        function calculaRegulares(codigoAdivinador, codigoPensador){
+//            var regulares = 0;
+//            //var newCodigoAdivinador = codigoAdivinador;
+//            //var newCodigoPensador = codigoPensador;
+//            for (i=0; i<=largoCodigo-1; i++){
+//                for (j=0; j<=largoCodigo-1; j++){
+//                    if (codigoPensador.charAt(i) === codigoAdivinador.charAt(j) && i != j){
+//                        regulares++;
+//                        //Artilugio (desprolijo). Reemplazar los caracteres coincidentes en ambos codigos para no recontar
+//                        codigoPensador = codigoPensador.replace(codigoPensador.charAt(j), "*");
+//                        codigoAdivinador = codigoAdivinador.replace(codigoAdivinador.charAt(i), "#");
+//                    }
+//                }
+//            }
+//            return regulares;
+//            //FALLA PUES RECUENTA REGULARES DE CARACTERES EN ALGUNO DE LOS CODIGOS QUE FUERON BUENOS
+//        }
+        
+        function calculoBuenosRegulares(codigoAdivinador, codigoPensador){
+            var buenos = 0;
+            var regulares = 0;
+            var soundNsBuenos = null;
+           
+           //calculo de buenos. Nota: cadena.charAt(i) equivale a cadena[i], se recomienda la primera  
+           /* Nota: Si bien el conteo funciona, se debe notar que no se sustituyen exactamente los caracteres
+            * coincidentes en la misma posicion que son buenos, pues cadena.replace() sustituye en el string
+            * al que aplica la primera ocurrencia (caracter) igual al primer argumento que se le pasa, y  no
+            * en la posicion donde se hayó ese caracter */
+           for (i=0; i<=largoCodigo-1; i++){
+               if (codigoAdivinador.charAt(i) === codigoPensador.charAt(i)){
+                   buenos++;
+                    
+                   //Artilugio: Se sustituyen los caracteres coincidentes para no recontar en el calculo de regulares
+                   //codigoAdivinador = codigoAdivinador.replace(codigoAdivinador.charAt(i), "*");
+                   //codigoPensador = codigoPensador.replace(codigoPensador.charAt(i), "#");
+                   //Opcion: Uso de funcion implementada arriba (replaceAt()) que sustituye un character de un
+                   //string por su indice (en realidad crear un string nuevo pues estos son inmutables en JS)
+                   codigoAdivinador = codigoAdivinador.replaceAt(i, "*");
+                   codigoPensador = codigoPensador.replaceAt(i, "#");
+                }
+           }
+           //alert("Adivinador; " + codigoAdivinador + ", Pensador: " + codigoPensador);
+           
+           //calculo de regulares
+           for (i=0; i<=largoCodigo-1; i++){
+               for (j=0; j<=largoCodigo-1; j++){
+                   if (codigoAdivinador.charAt(i) == codigoPensador.charAt(j) && i!=j){
+                        regulares++;
+                        //Artilugio analogo
+                        //codigoAdivinador = codigoAdivinador.replace(codigoAdivinador.charAt(i), "*");
+                        //codigoPensador = codigoPensador.replace(codigoPensador.charAt(j), "#");
+                        
+                        //Mejor: uso de funcion definida arriba replaceAt() 
+                        codigoAdivinador = codigoAdivinador.replaceAt(i, "*");
+                        codigoPensador = codigoPensador.replaceAt(j, "#");
+                   }
+               }
+           }
+           //reproduce audio con numero de buenos 
+           //sonidos no se reproducen en ambiente web. Descomentar cuando se cree el apk
+           soundNsBuenos = new Media("/android_asset/www/media/audio/numeros/" + buenos.toString() + ".wav"); 
+           soundNsBuenos.play();
+           
+           //alert("Adivinador; " + codigoAdivinador + ", Pensador: " + codigoPensador);
+           //alert(buenos);
+           return [buenos, regulares];
+        }  //de calculoBuenosRegulares()
+        
+        function compararCodigo(){
+            //cantIntentos--;
+            
+            var soundLostWin = null;
+            var codigoAdivinador = $("#codigoAdivinador").prop("value").toUpperCase();  //convertimos a mayusculas por si es codigo con letras minúsculas
+            
+            //verifica si el codigo introducido tiene el largo adecuado y los caracteres apropiados (dentro del rango)
+            if (codigoAdivinador.length !== largoCodigo || regExpAdivinador.test(codigoAdivinador)){
+                alert("El código introducido no tiene " + largoCodigo + " caracteres, o no esta en el rango: [" + regExpAdivinador.toString().substring(3,regExpAdivinador.toString().length - 3) + "]");
+                $("#codigoAdivinador").focus();
+            }else{
+                cantIntentos--; 
+                $("#tagIntentosRestantes").html(cantIntentos.toString());
+
+                //almacena arreglo con primer celda el numero de buenos y segunda celda el numero de regulares
+                var buenosRegulares = calculoBuenosRegulares(codigoAdivinador.toString(), codigoPensador);
+                //var buenos = calculaBuenos(codigoAdivinador, codigoPensador);  //no necesario: codigoAdivinador.toString()
+                //var regulares = calculaRegulares(codigoAdivinador.toString(), codigoPensador);
+                //var regulares = calculaRegulares(codigoAdivinador, codigoPensador);
+
+                codigosArriesgados.append($("#codigoAdivinador").prop("value").toUpperCase() + " " + "&nbsp;&nbsp;<img src='img/flecha.png' width='60' height='25' style='vertical-align:middle'>&nbsp;&nbsp;" + " B: " + buenosRegulares[0] + ", R: " + buenosRegulares[1] +  "<br>");
+                if (cantIntentos >= 0 && codigoAdivinador !== codigoPensador){
+                    //append agrega al final contenido (o hijos del nodo)
+                    //codigosArriesgados.append($("#codigoAdivinador").prop("value") + " --- B: " + buenosRegulares[0] + ", R: " + buenosRegulares[1] +  "<br>");
+                    //alert("Codigos distintos. " + ", Buenos: " + "buenos: " + buenosRegulares[0] + ", regulares: " + buenosRegulares[1] + ", Intentos restantes: " + cantIntentos);
+                    //$("#codigoAdivinador").prop("value", "");  //limpiamos el campo   
+                    
+                    if (cantIntentos !== 0){
+                        $("#codigoAdivinador").prop("value", "");  //limpiamos el campo
+                    }else{  //cantIntentos == 0, se perdió (en este caso no limpiamos el campo)
+                        //sonido de partida perdida (risa de Nelson)
+                        //sonidos no se reproducen en ambiente web. Descomentar cuando se cree el apk
+                        soundLostWin = new Media("/android_asset/www/media/audio/risa_Nelson.mp3");
+                        soundLostWin.play();
+                        $("#codigoAdivinador").prop("disabled", true); //deshabilitamos el campo
+                        $("#btnConfirmar").prop("disabled", true);  //deshabilitamos el botón  
+                        alert("Has perdido! El código era: " + codigoPensador);
+                    }
+                }else{  //codigoAdivinador == codigoPensador
+                    //sonido de aplausos al ganar
+                    //sonidos no se reproducen en ambiente web. Descomentar cuando se cree el apk
+                    soundLostWin = new Media("/android_asset/www/media/audio/aplausos.wav");
+                    soundLostWin.play();
+                    $("#codigoAdivinador").prop("disabled", true); //deshabilitamos el campo
+                    $("#btnConfirmar").prop("disabled", true);  //deshabilitamos el botón 
+                    alert("Felicitaciones! Adivinaste el codigo: " + codigoPensador);
+                }
+            }
+        }
+        
+        function iniciarJuego(){
+            retrieveParameters();
+            
+            //inicializa algunos parametros segun los parametros recibidos en la url
+//            largoCodigo = dificultad === "principiante" ? 4 : 
+//                              dificultad === "moderado" ? 6 : 8;  //establece el largo del codigo del pensador
+//            cantIntentos = dificultad === "principiante" ? 10 :
+//                               dificultad === "moderado" ? 15 : 20;  //establece la cantidad de intentos para el juegador (adivinador)
+                                 
+             switch (dificultad){
+                 case "principiante":
+                     largoCodigo = 4;
+                     cantIntentos = 10;
+                     //$("#codigoAdivinador").maxlength(4);
+                     break;
+                 case "moderado":
+                     largoCodigo = 6;
+                     cantIntentos = 15;
+                     break;
+                 case "experto":
+                     largoCodigo = 8;
+                     cantIntentos = 20;
+                     break;
+             }
+            
+            //Por defecto el campo para introducir codigos por parte del adivinador es type='tel'.
+            //Si se elige tipo de codigo 'letras' o 'combinado' establecemos para el campo type='text' 
+            //(para mostrar teclados virtuales adecuados)
+            if (tipoCodigo === "letras" || tipoCodigo === "combinado"){
+                $("#codigoAdivinador").prop("type", "text");  
+            }
+            
+            $("#codigoAdivinador").prop("maxlength", largoCodigo);  //limita el largo de los codigos introducidos
+            
+            $("#tagIntentosRestantes").html(cantIntentos);  //escribe la cantidad de intentos restantes para adivinar el codigo     
+                   
+            generateCode();
+        }
+        
+        $(document).ready(function(){
+            codigosArriesgados = $("#codigosArriesgados");  //referencia a parrafo que muestra los
+                                                //codigos arriesgados por el adivinador   
+            iniciarJuego();
+        });    
+ 
+        </script>
+    </head>
+    <body onload="onLoad()">
+        
+        <!-- <h1>Pantalla de Juego</h1> -->
+        <!-- <button onclick="retrieveParameters()">Parametro</button> -->
+        <div data-role="page" data-theme="a" style="text-align:center" class="backgroundImage">
+            <div data-role="header">
+                MasterMind - Juego
+            </div>
+            <div data-role="main" class="ui-content">
+                <!-- <div id='backgroundImage'> -->
+                <fieldset>
+                    <label for="campoTexto">Ingrese su código: </label>
+                    <!-- <input type="number" id="codigoAdivinador" name="codigoAdivinador"> --> <!-- type='tel' llama a teclado numérico
+                                                                                                 y se le aplica el atributo maxlength -->
+                    <input type="tel" id="codigoAdivinador" name="codigoAdivinador" maxlength='4'>
+                    <p>Intentos restantes: <strong class="estilo" id="tagIntentosRestantes">:)</strong></p>
+                    <p>Códigos arriesgados - Buenos - Regulares</p>
+                    <p id="codigosArriesgados" class="estilo"></p>
+                    <button id="btnConfirmar"  onclick="compararCodigo()" class="ui-btn">Confirmar</button>                   
+                </fieldset>
+            </div>
+            <!-- </div>     -->
+        </div>
+        
+        <!-- *********************Inicia juego ******************************-->
+        <script>
+
+        </script>
+    </body>
+</html>
+
